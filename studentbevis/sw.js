@@ -1,5 +1,5 @@
-const CACHE = 'studentdemo-v6';
-const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
+const CACHE = 'studentdemo-v7';
+const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg', './qr-code.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -24,11 +24,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
-  // Always check the network first for HTML so code changes are not hidden
-  // behind an old service-worker cache.
+  // Always fetch HTML from the network first, so UI and JavaScript fixes
+  // become visible immediately after deployment.
   if (event.request.mode === 'navigate' || event.request.url.endsWith('/index.html')) {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-store' })
         .then((response) => {
           const copy = response.clone();
           caches.open(CACHE).then((cache) => cache.put(event.request, copy));
