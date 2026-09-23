@@ -1,1 +1,45 @@
-const CACHE='studentdemo-v5';const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg'];self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('studentdemo-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));self.addEventListener('fetch',event=>{if(event.request.method!=='GET')return;const isPage=event.request.mode==='navigate'||event.request.url.endsWith('/index.html');if(isPage){event.respondWith(fetch(event.request).then(response=>{if(!response.ok)return response;return response.text().then(html=>{const fix='<script>document.addEventListener("click",function(event){const button=event.target.closest("#controlButton");if(!button)return;const home=document.getElementById("homeView"),control=document.getElementById("controlView");if(home&&control){home.hidden=true;control.hidden=false;window.scrollTo(0,0);}});<\\/script>';const updated=html.includes("<\\/body>")?html.replace("<\\/body>",fix+"<\\/body>"):html+fix;return new Response(updated,{status:response.status,statusText:response.statusText,headers:response.headers});});}).catch(()=>caches.match('./index.html')));return;}event.respondWith(caches.match(event.request).then(cached=>cached||fetch(event.request).then(response=>{if(response&&response.status===200&&event.request.url.startsWith(self.location.origin)){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy));}return response;})));});
+const CACHE = 'studentdemo-v6';
+const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE)
+      .then((cache) => cache.addAll(APP_SHELL))
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys()
+      .then((keys) => Promise.all(
+        keys
+          .filter((key) => key.startsWith('studentdemo-') && key !== CACHE)
+          .map((key) => caches.delete(key))
+      ))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+
+  // Always check the network first for HTML so code changes are not hidden
+  // behind an old service-worker cache.
+  if (event.request.mode === 'navigate' || event.request.url.endsWith('/index.html')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(event.request).then((cached) => cached || fetch(event.request))
+  );
+});
