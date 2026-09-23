@@ -1,0 +1,1 @@
+{"name":"Studentbevis – skoleprototype","short_name":"Studentdemo","description":"Interaktiv skoleprototype. Ikke gyldig studentbevis.","start_url":"./","scope":"./","display":"standalone","background_color":"#fcfcfd","theme_color":"#f3efff","icons":[{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
